@@ -3,276 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>手忙腳亂育兒大作戰 - Prototype</title>
+    <title>手忙腳亂育兒大作戰 V3 - Roguelike抽卡+學期制</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f0f2f5;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            user-select: none;
+            background-color: #f0f2f5; margin: 0; padding: 0;
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; user-select: none;
         }
 
         #game-container {
-            width: 100%;
-            max-width: 414px; /* 模擬手機 iPhone 尺寸 */
-            height: 100vh;
-            max-height: 896px;
-            background-color: #ffffff;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
+            width: 100%; max-width: 414px; height: 100vh; max-height: 896px;
+            background-color: #ffffff; box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            position: relative; overflow: hidden; display: flex; flex-direction: column;
         }
+
+        .screen { display: none; width: 100%; height: 100%; flex-direction: column; box-sizing: border-box; padding: 20px; }
+        .screen.active { display: flex; }
+        h2 { text-align: center; color: #333; margin-top: 5px; margin-bottom: 5px; }
 
         /* 主畫面 UI */
-        .screen {
-            display: none;
-            width: 100%;
-            height: 100%;
-            flex-direction: column;
-            box-sizing: border-box;
-            padding: 20px;
-        }
+        .name-section { display: flex; justify-content: center; gap: 10px; margin-bottom: 5px; }
+        .name-input { padding: 6px; border-radius: 8px; border: 1px solid #ccc; font-size: 16px; text-align: center; width: 50%; }
+        
+        .dashboard { background: #f7f9fa; border-radius: 12px; padding: 10px; margin-bottom: 10px; border: 1px solid #e1e4e6; }
+        .wallet { font-size: 20px; font-weight: bold; color: #2ecc71; text-align: center; margin-bottom: 5px; }
+        .pacing-info { text-align: center; font-size: 14px; font-weight: bold; color: #e67e22; margin-bottom: 8px; background: #fff3e0; padding: 5px; border-radius: 6px; }
 
-        .screen.active {
-            display: flex;
-        }
+        .chart-container { width: 100%; max-width: 260px; margin: 0 auto 10px auto; position: relative; }
 
-        h2 {
-            text-align: center;
-            color: #333;
-            margin-top: 10px;
-        }
+        .btn-group { display: flex; flex-direction: column; gap: 8px; }
+        .btn { background-color: #ff7675; color: white; border: none; padding: 12px; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.1s; }
+        .btn-next { background-color: #9b59b6; }
+        .btn-next:disabled { background-color: #bdc3c7; cursor: not-allowed; box-shadow: none; }
+        .btn:active:not(:disabled) { transform: scale(0.95); }
 
-        /* 儀表板：屬性與金錢 */
-        .dashboard {
-            background: #f7f9fa;
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 20px;
-            border: 1px solid #e1e4e6;
-        }
-
-        .wallet {
-            font-size: 24px;
-            font-weight: bold;
-            color: #2ecc71;
-            text-align: center;
-            margin-bottom: 15px;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .stat-box {
-            background: white;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #edf0f2;
-            font-size: 14px;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .stat-val {
-            font-weight: bold;
-            color: #3498db;
-        }
-
-        .btn {
-            background-color: #ff7675;
-            color: white;
-            border: none;
-            padding: 15px;
-            border-radius: 12px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            text-align: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: transform 0.1s;
-        }
-
-        .btn:active {
-            transform: scale(0.95);
-        }
+        /* 抽卡畫面 UI */
+        #card-screen { background-color: #ffeaa7; justify-content: center; align-items: center; text-align: center; }
+        .card-box { background: white; padding: 30px; border-radius: 20px; border: 4px dashed #e67e22; box-shadow: 0 10px 20px rgba(0,0,0,0.15); width: 80%; }
+        .card-title { font-size: 24px; font-weight: bold; color: #e67e22; margin-bottom: 15px; }
+        .card-effect { font-size: 16px; color: #2c3e50; line-height: 1.6; margin-bottom: 25px; font-weight: bold; }
 
         /* 遊戲關卡畫面 */
-        #battle-screen {
-            background-color: #fafafa;
-            position: relative;
+        #battle-screen { background-color: #fafafa; position: relative; padding: 10px; }
+        .game-header { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: bold; background: rgba(255,255,255,0.9); padding: 8px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); z-index: 100; }
+        #game-area { flex: 1; position: relative; margin-top: 10px; border: 2px dashed #ccc; border-radius: 12px; overflow: hidden; background: #fff; }
+
+        /* 實體：玩家 (家長) */
+        #player {
+            position: absolute; width: 40px; height: 40px; background-color: #3498db; border-radius: 50%;
+            transition: left 0.18s linear, top 0.18s linear;
+            display: flex; justify-content: center; align-items: center; font-size: 18px; color: white; border: 2px solid #2980b9; z-index: 50; pointer-events: none;
         }
 
-        .game-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 16px;
-            font-weight: bold;
-            z-index: 10;
-            background: rgba(255,255,255,0.9);
-            padding: 10px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
+        /* 工作台 */
+        .station { position: absolute; bottom: 10px; width: 70px; height: 50px; border-radius: 8px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 20px; font-weight: bold; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; }
+        #station-milk { left: 40px; background-color: #f1c40f; border: 2px solid #f39c12; }
+        #station-diaper { right: 40px; background-color: #e67e22; border: 2px solid #d35400; }
+        .station-label { font-size: 10px; margin-top: 2px; }
 
-        #game-area {
-            flex: 1;
-            position: relative;
-            margin-top: 10px;
-            border: 2px dashed #ccc;
-            border-radius: 12px;
-            overflow: hidden;
-        }
+        /* BB需求 */
+        .bb-npc { position: absolute; width: 60px; height: 60px; border-radius: 50%; background: #ffeaa7; display: flex; justify-content: center; align-items: center; font-size: 28px; border: 3px solid #fdcb6e; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .demand-bubble { position: absolute; top: -45px; background: white; border: 2px solid #ff7675; border-radius: 50%; width: 45px; height: 45px; display: flex; justify-content: center; align-items: center; font-size: 22px; animation: popup 0.2s ease-out; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
 
-        /* 需求泡泡 */
-        .bubble {
-            position: absolute;
-            width: 65px;
-            height: 65px;
-            border-radius: 50%;
-            background: white;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 30px;
-            cursor: pointer;
-            animation: popup 0.2s ease-out;
-            border: 3px solid #ff7675;
-        }
+        @keyframes popup { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+        .timer-bar { position: absolute; bottom: -5px; left: 5%; height: 4px; background-color: #ff7675; width: 90%; }
 
-        @keyframes popup {
-            0% { transform: scale(0); }
-            100% { transform: scale(1); }
-        }
+        /* 模式特效 */
+        .fever-mode { animation: flash 0.5s infinite alternate; }
+        @keyframes flash { 0% { background-color: #fafafa; } 100% { background-color: #ffeaa7; } }
+        .survival-mode { animation: survival-flash 0.4s infinite alternate; }
+        @keyframes survival-flash { 0% { background-color: #ffdbdb; } 100% { background-color: #ffb3b3; } }
 
-        /* 倒數計時條 */
-        .timer-bar {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            height: 4px;
-            background-color: #ff7675;
-            width: 100%;
-        }
-
-        /* 瘋狂期紅光閃爍 */
-        .fever-mode {
-            animation: flash 0.5s infinite alternate;
-        }
-
-        @keyframes flash {
-            0% { background-color: #fafafa; }
-            100% { background-color: #ffeaa7; }
-        }
-
-        .survival-mode {
-            animation: survival-flash 0.4s infinite alternate;
-        }
-
-        @keyframes survival-flash {
-            0% { background-color: #ffdbdb; }
-            100% { background-color: #ffb3b3; }
-        }
-
-        /* 漂浮 Perfect 文字 */
-        .perfect-text {
-            position: absolute;
-            color: #2ecc71;
-            font-weight: bold;
-            font-size: 20px;
-            animation: floatUp 0.5s ease-out forwards;
-            pointer-events: none;
-            z-index: 100;
-        }
-
-        @keyframes floatUp {
-            0% { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(-30px); }
-        }
+        .perfect-text { position: absolute; color: #2ecc71; font-weight: bold; font-size: 16px; animation: floatUp 0.5s ease-out forwards; pointer-events: none; z-index: 100; }
+        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-30px); } }
 
         /* 結算彈窗 */
-        .modal {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            opacity: 0; pointer-events: none;
-            transition: opacity 0.3s;
-        }
-
-        .modal.active {
-            opacity: 1; pointer-events: auto;
-        }
-
-        .modal-content {
-            background: white;
-            width: 80%;
-            border-radius: 16px;
-            padding: 25px;
-            text-align: center;
-        }
+        .modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+        .modal.active { opacity: 1; pointer-events: auto; }
+        .modal-content { background: white; width: 85%; border-radius: 16px; padding: 20px; text-align: center; }
     </style>
 </head>
 <body>
 
 <div id="game-container">
 
-    <!-- SCREEN 1: 主畫面 (日常養成面板) -->
     <div id="main-screen" class="screen active">
-        <h2>👶 我的 BB (0歲)</h2>
+        <h2>👶 育兒大作戰 V3</h2>
+        <div class="name-section">
+            <input type="text" id="txt-bb-name" class="name-input" value="笨寶" onchange="saveName()">
+            <span style="font-size: 22px; align-self: center;">(0歲)</span>
+        </div>
         
+        <div class="pacing-info">
+            📅 今年進度：已完成日常關卡 (<span id="lbl-play-count">0</span> / 3) 次
+        </div>
+
         <div class="dashboard">
             <div class="wallet">教育基金: $<span id="lbl-cash">1000</span></div>
-            <div class="stats-grid">
-                <div class="stat-box">🧠 智商 (IQ) <span class="stat-val" id="lbl-iq">10</span></div>
-                <div class="stat-box">❤️ 情商 (EQ) <span class="stat-val" id="lbl-eq">10</span></div>
-                <div class="stat-box">💪 體魄 (PHY) <span class="stat-val" id="lbl-phy">10</span></div>
-                <div class="stat-box">🎨 創意 (CRE) <span class="stat-val" id="lbl-cre">10</span></div>
-                <div class="stat-box">📈 財商 (FIN) <span class="stat-val" id="lbl-fin">10</span></div>
-                <div class="stat-box">✨ 外在 (APP) <span class="stat-val" id="lbl-app">10</span></div>
+            <div class="chart-container">
+                <canvas id="hexagonChart"></canvas>
             </div>
         </div>
 
-        <p style="text-align: center; color: #666; font-size: 14px; margin-bottom: 30px;">
-            提示：1分鐘日常關卡。45秒後進入瘋狂期！60秒後若未死，進入【貪吃蛇超時模式】瘋狂賺錢！
-        </p>
-
-        <button class="btn" onclick="startLevel()">挑戰 0 歲日常地獄關卡 ➔</button>
+        <div class="btn-group">
+            <button id="btn-start-game" class="btn" onclick="drawRandomCard()">進入日常關卡 (隨機抽卡亂入) ➔</button>
+            <button id="btn-birthday" class="btn btn-next" onclick="triggerNextStage()" disabled>舉辦 1 歲生日大賽 (需完成3次日常) ➔</button>
+        </div>
     </div>
 
-    <!-- SCREEN 2: 小遊戲關卡畫面 -->
+    <div id="card-screen" class="screen">
+        <h2>🃏 命運事件砸進生活！</h2>
+        <div class="card-box">
+            <div id="card-emoji" style="font-size: 60px; margin-bottom: 10px;">🌪️</div>
+            <div id="card-title" class="card-title">突發：打風放假</div>
+            <div id="card-effect" class="card-effect">環境影響：BB全日喺屋企精力過剩，需求泡泡生成速度變快一倍！</div>
+            <button class="btn" style="width: 100%; background-color: #e67e22;" onclick="startLevelFromCard()">直面挑戰，進入關卡！➔</button>
+        </div>
+    </div>
+
     <div id="battle-screen" class="screen">
         <div class="game-header">
             <div>⏱️ 時間: <span id="game-time">0</span>s</div>
-            <div style="color: #d63031;">❤️ 生命: <span id="game-lives">3</span></div>
-            <div style="color: #2ecc71;">💰 賺到: $<span id="game-bonus">0</span></div>
+            <div id="lbl-active-card" style="color: #e67e22;">狀態: 正常</div>
+            <div style="color: #d63031;">❤️ 命: <span id="game-lives">3</span></div>
+            <div style="color: #2ecc71;">💰: $<span id="game-bonus">0</span></div>
         </div>
         
-        <div id="game-area">
-            <!-- 泡泡會動態生成喺呢度 -->
+        <div id="game-area" onclick="movePlayer(event)">
+            <div id="player">🧑‍🍼</div>
+            <div id="station-milk" class="station" onclick="interactStation('🍼', event)">
+                🍼<div class="station-label">奶樽台</div>
+            </div>
+            <div id="station-diaper" class="station" onclick="interactStation('💩', event)">
+                💩<div class="station-label">尿片台</div>
+            </div>
         </div>
     </div>
 
-    <!-- 結算彈窗 MODAL -->
     <div id="result-modal" class="modal">
         <div class="modal-content">
-            <h3 id="modal-title" style="font-size: 24px; margin-bottom: 10px;">BB 一歲生快！</h3>
-            <p id="modal-desc" style="color: #555; line-height: 1.6; margin-bottom: 20px;"></p>
-            <button class="btn" style="width: 100%;" onclick="closeModal()">帶住獎金返回日常 ➔</button>
+            <h3 id="modal-title" style="font-size: 22px; margin-bottom: 10px;">BB 生日快樂！</h3>
+            <p id="modal-desc" style="color: #555; line-height: 1.5; margin-bottom: 20px; text-align: left;"></p>
+            <button class="btn" style="width: 100%;" onclick="closeModal()">確認返回日常 ➔</button>
         </div>
     </div>
 
@@ -281,160 +155,253 @@
 <script>
     // --- 遊戲全局數據 (日常系統) ---
     let saveData = {
+        name: "笨寶",
         cash: 1000,
-        iq: 10, eq: 10, phy: 10, cre: 10, fin: 10, app: 10
+        iq: 15, eq: 15, phy: 15, cre: 15, fin: 15, app: 15,
+        playCount: 0 // 今年玩日常關卡嘅次數 (上限 3)
     };
+
+    // --- 隨機卡牌庫設定 ---
+    const cardDeck = [
+        { id: 'typhoon', emoji: '🌪️', title: '突發：打風放假', effect: 'BB整天留喺屋企精力充沛！需求泡泡生成速度【加快雙倍】！', desc: '打風放假' },
+        { id: 'elders', emoji: '👴👵', title: '長輩：四大長輩駕到', effect: '長輩們爭住塞利是！超時生存模式下，每次完美照顧獎金變為【$150】！', desc: '長輩加成' },
+        { id: 'flu', emoji: '🤒', title: '危機：BB不適感冒', effect: 'BB身體唔舒服耐性極低！所有需求氣泡嘅爆炸倒數時間【縮短 40%】！', desc: '感冒降耐性' }
+    ];
+    let activeCard = null; // 當前觸發嘅卡牌
 
     // --- 小遊戲即時變數 ---
     let gameState = {
-        timer: 0,
-        lives: 3,
-        bonusEarned: 0,
-        spawnInterval: null,
-        clockInterval: null,
-        currentSpawnRate: 2000, // 初始 2 秒出一個
-        isGameOver: false
+        timer: 0, lives: 3, bonusEarned: 0,
+        playerX: 180, playerY: 200, playerHolding: '空手',
+        spawnInterval: null, clockInterval: null,
+        currentSpawnRate: 2500, isGameOver: false
     };
 
+    let radarChart = null;
     const emojis = ['🍼', '💩'];
 
-    // 更新主畫面顯示
-    function updateMainDashboard() {
-        document.getElementById('lbl-cash').innerText = saveData.cash;
-        document.getElementById('lbl-iq').innerText = saveData.iq;
-        document.getElementById('lbl-eq').innerText = saveData.eq;
-        document.getElementById('lbl-phy').innerText = saveData.phy;
-        document.getElementById('lbl-cre').innerText = saveData.cre;
-        document.getElementById('lbl-fin').innerText = saveData.fin;
-        document.getElementById('lbl-app').innerText = saveData.app;
+    function initChart() {
+        const ctx = document.getElementById('hexagonChart').getContext('2d');
+        radarChart = new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: ['🧠 智商', '❤️ 情商', '💪 體魄', '🎨 創意', '📈 財商', '✨ 外在'],
+                datasets: [{
+                    label: 'BB 當前能力值',
+                    data: [saveData.iq, saveData.eq, saveData.phy, saveData.cre, saveData.fin, saveData.app],
+                    backgroundColor: 'rgba(255, 118, 117, 0.2)',
+                    borderColor: 'rgba(255, 118, 117, 1)',
+                    borderWidth: 2,
+                    pointBackgroundColor: 'rgba(214, 48, 49, 1)'
+                }]
+            },
+            options: {
+                scales: { r: { min: 0, max: 100, ticks: { display: false } } },
+                plugins: { legend: { display: false } }
+            }
+        });
     }
 
-    // 開始小遊戲
-    function startLevel() {
-        // 切換畫面
+    function saveName() { saveData.name = document.getElementById('txt-bb-name').value; }
+
+    function updateMainDashboard() {
+        document.getElementById('lbl-cash').innerText = saveData.cash;
+        document.getElementById('txt-bb-name').value = saveData.name;
+        document.getElementById('lbl-play-count').innerText = saveData.playCount;
+
+        // Pacing 控制：只有玩滿 3 次，生日按鈕先解鎖，同時日常關卡按鈕鎖死
+        if(saveData.playCount >= 3) {
+            document.getElementById('btn-birthday').disabled = false;
+            document.getElementById('btn-start-game').disabled = true;
+            document.getElementById('btn-start-game').innerText = "今年度訓練已飽和 🛑";
+        } else {
+            document.getElementById('btn-birthday').disabled = true;
+            document.getElementById('btn-start-game').disabled = false;
+            document.getElementById('btn-start-game').innerText = "進入日常關卡 (隨機抽卡亂入) ➔";
+        }
+
+        if(radarChart) {
+            radarChart.data.datasets[0].data = [saveData.iq, saveData.eq, saveData.phy, saveData.cre, saveData.fin, saveData.app];
+            radarChart.update();
+        }
+    }
+
+    // --- STEP 1: 抽卡流程 ---
+    function drawRandomCard() {
+        // 隨機抽一張環境卡
+        activeCard = cardDeck[Math.floor(Math.random() * cardDeck.length)];
+        
+        // 渲染抽卡畫面
+        document.getElementById('card-emoji').innerText = activeCard.emoji;
+        document.getElementById('card-title').innerText = activeCard.title;
+        document.getElementById('card-effect').innerText = activeCard.effect;
+
+        // 切換到抽卡畫面
         document.getElementById('main-screen').classList.remove('active');
+        document.getElementById('card-screen').classList.add('active');
+    }
+
+    // --- STEP 2: 從卡牌畫面正式開局 ---
+    function startLevelFromCard() {
+        document.getElementById('card-screen').classList.remove('active');
         document.getElementById('battle-screen').classList.add('active');
 
-        // 初始化關卡數據
-        gameState.timer = 0;
-        gameState.lives = 3;
-        gameState.bonusEarned = 0;
-        gameState.currentSpawnRate = 2000;
-        gameState.isGameOver = false;
-        document.getElementById('game-area').innerHTML = '';
-        document.getElementById('battle-screen').className = 'screen active'; // 清除閃爍 class
+        // 初始化
+        gameState.timer = 0; gameState.lives = 3; gameState.bonusEarned = 0;
+        gameState.isGameOver = false; gameState.playerHolding = '空手';
+        document.getElementById('player-hand').innerText = '空手';
+        document.getElementById('player').innerText = '🧑‍🍼';
+        document.getElementById('lbl-active-card').innerText = `卡牌: ${activeCard.desc}`;
+        
+        // 基礎生成速度受【打風放假卡】影響
+        gameState.currentSpawnRate = activeCard.id === 'typhoon' ? 1200 : 2400;
 
+        gameState.playerX = 180; gameState.playerY = 200;
+        document.getElementById('player').style.left = '180px';
+        document.getElementById('player').style.top = '200px';
+
+        document.querySelectorAll('.bb-npc').forEach(el => el.remove());
+        document.getElementById('battle-screen').className = 'screen active';
+        document.getElementById('game-time').innerText = "0";
         updateBattleUI();
 
-        // 開啟計時器 (每秒執行一次)
         gameState.clockInterval = setInterval(gameClock, 1000);
-        // 開啟泡泡生成器
         setupSpawning();
     }
 
-    // 關卡時間核心推進 (Pacing 控制邏輯)
+    // 走位與工作台交互邏輯
+    function movePlayer(event) {
+        if(gameState.isGameOver) return;
+        const gameArea = document.getElementById('game-area');
+        const rect = gameArea.getBoundingClientRect();
+        gameState.playerX = event.clientX - rect.left - 20;
+        gameState.playerY = event.clientY - rect.top - 20;
+
+        if(gameState.playerY > rect.height - 100) gameState.playerY = rect.height - 100;
+        if(gameState.playerY < 10) gameState.playerY = 10;
+        if(gameState.playerX < 10) gameState.playerX = 10;
+        if(gameState.playerX > rect.width - 50) gameState.playerX = rect.width - 50;
+
+        document.getElementById('player').style.left = gameState.playerX + 'px';
+        document.getElementById('player').style.top = gameState.playerY + 'px';
+    }
+
+    function interactStation(item, event) {
+        event.stopPropagation();
+        if(gameState.isGameOver) return;
+        gameState.playerHolding = item;
+        document.getElementById('player-hand').innerText = item;
+        document.getElementById('player').innerText = item === '🍼' ? '🍼' : '💩';
+    }
+
     function gameClock() {
         if(gameState.isGameOver) return;
-
         gameState.timer++;
         document.getElementById('game-time').innerText = gameState.timer;
 
-        // Pacing 節奏階段判定
+        // Pacing 動態加速控制 (受打風放假影響會成倍數疊加)
+        let speedMultiplier = activeCard.id === 'typhoon' ? 2 : 1;
+
         if (gameState.timer === 45) {
-            // 45秒：進入瘋狂期
             document.getElementById('battle-screen').classList.add('fever-mode');
-            gameState.currentSpawnRate = 800; // 加快到 0.8 秒出一個
+            gameState.currentSpawnRate = 1200 / speedMultiplier;
             setupSpawning();
         } else if (gameState.timer === 60) {
-            // 60秒：成功挺進【超時生存模式】！
             document.getElementById('battle-screen').classList.remove('fever-mode');
             document.getElementById('battle-screen').classList.add('survival-mode');
-            gameState.currentSpawnRate = 500; // 超時初始 0.5 秒一個
+            gameState.currentSpawnRate = 600 / speedMultiplier;
             setupSpawning();
         } else if (gameState.timer > 60) {
-            // 貪吃蛇式：超時後每秒速度再提升 8%
-            gameState.currentSpawnRate = Math.max(150, gameState.currentSpawnRate * 0.92);
+            gameState.currentSpawnRate = Math.max(200, gameState.currentSpawnRate * 0.9);
             setupSpawning();
         }
     }
 
-    // 重新設定動態生成速度
     function setupSpawning() {
         clearInterval(gameState.spawnInterval);
-        gameState.spawnInterval = setInterval(spawnBubble, gameState.currentSpawnRate);
+        gameState.spawnInterval = setInterval(spawnBBNeed, gameState.currentSpawnRate);
     }
 
-    // 生成需求泡泡
-    function spawnBubble() {
+    function spawnBBNeed() {
         if(gameState.isGameOver) return;
-
         const gameArea = document.getElementById('game-area');
-        const bubble = document.createElement('div');
-        bubble.className = 'bubble';
-        bubble.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+        const bb = document.createElement('div');
+        bb.className = 'bb-npc';
+        bb.innerText = '👶';
 
-        // 隨機左邊距與上邊距 (扣除泡泡自身大小避免出界)
         const maxX = gameArea.clientWidth - 70;
-        const maxY = gameArea.clientHeight - 70;
-        bubble.style.left = Math.random() * maxX + 'px';
-        bubble.style.top = Math.random() * maxY + 'px';
+        const maxY = gameArea.clientHeight - 180;
+        const left = Math.random() * maxX;
+        const top = Math.random() * maxY + 20;
+        bb.style.left = left + 'px'; bb.style.top = top + 'px';
 
-        // 加上泡泡內部的生命條 (耐性倒數)
+        const neededItem = Math.random() > 0.5 ? '🍼' : '💩';
+        const bubble = document.createElement('div');
+        bubble.className = 'demand-bubble';
+        bubble.innerText = neededItem;
+
+        // 計算耐性倒數時間：受【感冒卡】影響縮短 40%
+        let baseLifetime = gameState.timer > 60 ? 1500 : (gameState.timer >= 45 ? 2500 : 4000);
+        let lifetime = activeCard.id === 'flu' ? baseLifetime * 0.6 : baseLifetime;
+
         const timerBar = document.createElement('div');
         timerBar.className = 'timer-bar';
-        // 隨年齡/時間決定泡泡消失時間 (超時模式下泡泡極速爆炸)
-        let lifetime = gameState.timer > 60 ? 1200 : (gameState.timer >= 45 ? 1800 : 3000); 
         timerBar.style.animation = `shrink ${lifetime}ms linear forwards`;
         bubble.appendChild(timerBar);
+        bb.appendChild(bubble);
 
-        // 點擊事件
-        bubble.onclick = function(e) {
+        bb.onclick = function(e) {
             e.stopPropagation();
-            // 彈出 Perfect 特效
-            createPerfectText(bubble.style.left, bubble.style.top);
-            
-            // 如果在超時生存模式，每點一個賺 $50
-            if (gameState.timer > 60) {
-                gameState.bonusEarned += 50;
+            if(gameState.isGameOver) return;
+
+            if (gameState.playerHolding === neededItem) {
+                // 超時模式賺錢：受【長輩卡】加成變成一個 $150！
+                let moneyPerClick = activeCard.id === 'elders' ? 150 : 50;
+                let textDisplay = '完美照顧!';
+                
+                if (gameState.timer > 60) {
+                    gameState.bonusEarned += moneyPerClick;
+                    textDisplay = `完美照顧! +$${moneyPerClick}`;
+                }
+                createPerfectText(left + 'px', top + 'px', textDisplay);
+                
+                gameState.playerHolding = '空手';
+                document.getElementById('player-hand').innerText = '空手';
+                document.getElementById('player').innerText = '🧑‍🍼';
+
+                bb.remove();
+                updateBattleUI();
+            } else {
+                alert(`BB依家想要的是 ${neededItem}！拿錯道具了！`);
             }
-            
-            bubble.remove();
-            updateBattleUI();
         };
 
-        // 超時未點擊爆炸
         setTimeout(() => {
-            if (bubble.parentNode) {
-                bubble.remove();
+            if (bb.parentNode) {
+                bb.remove();
                 gameState.lives--;
                 updateBattleUI();
-                if (gameState.lives <= 0) {
-                    endGame();
-                }
+                if (gameState.lives <= 0) endGame();
             }
         }, lifetime);
 
-        gameArea.appendChild(bubble);
+        gameArea.appendChild(bb);
     }
 
-    // 畫面震動/Perfect 特效
-    function createPerfectText(x, y) {
+    function createPerfectText(x, y, txt) {
         const p = document.createElement('div');
         p.className = 'perfect-text';
-        p.innerText = gameState.timer > 60 ? 'Perfect! +$50' : 'Perfect!';
-        p.style.left = x;
-        p.style.top = y;
+        p.innerText = txt; p.style.left = x; p.style.top = y;
         document.getElementById('game-area').appendChild(p);
         setTimeout(() => p.remove(), 500);
     }
 
-    // 更新戰鬥動態 UI
     function updateBattleUI() {
         document.getElementById('game-lives').innerText = gameState.lives;
         document.getElementById('game-bonus').innerText = gameState.bonusEarned;
     }
 
-    // 遊戲結束 (命扣完)
+    // 關卡結束結算
     function endGame() {
         gameState.isGameOver = true;
         clearInterval(gameState.spawnInterval);
@@ -443,32 +410,48 @@
         const modal = document.getElementById('result-modal');
         const desc = document.getElementById('modal-desc');
         
-        // 判定玩家撐得好唔好
+        // 次數累加
+        saveData.playCount++;
+
         if (gameState.timer >= 60) {
-            document.getElementById('modal-title').innerText = "🎉 戰神級家長！";
-            desc.innerHTML = `你成功捱過 60 秒常規地獄，並喺【超時生存模式】中撐到 <b>${gameState.timer}秒</b>！<br><br>
-            👶 成長獎勵：體魄 +5, 情商 +5<br>
-            💰 帶走額外教育基金：<b>$${gameState.bonusEarned}</b>`;
+            desc.innerHTML = `🎉 <b>成功在環境【${activeCard.title}】下活了下來！</b><br>
+            你帶著 <b>${saveData.name}</b> 成功捱過常規 60 秒，並喺超時生存中撐到 <b>${gameState.timer}秒</b>！<br><br>
+            📈 隨機能力大幅提升：體魄 +10, 情商 +10, 智商 +5<br>
+            💰 賺得教育基金：<b>+$${gameState.bonusEarned}</b>`;
+            saveData.phy += 10; saveData.eq += 10; saveData.iq += 5;
         } else {
-            document.getElementById('modal-title').innerText = "🍼 照顧不周！";
-            desc.innerHTML = `你在第 <b>${gameState.timer}秒</b> 時崩潰了，未能進入超時賺錢模式。<br><br>
-            👶 成長獎勵：體魄 +2 (吸取教訓)<br>
-            💰 帶走額外教育基金：<b>$0</b>`;
+            desc.innerHTML = `🍼 <b>喺環境【${activeCard.title}】下徹底崩潰...</b><br>
+            你在第 <b>${gameState.timer}秒</b> 時支撐不住。看來突發事件威力太強了！<br><br>
+            📈 成長安慰獎：體魄 +3, 創意 +2<br>
+            💰 賺得教育基金：<b>+$0</b>`;
+            saveData.phy += 3; saveData.cre += 2;
         }
 
-        // 結算數值灌回存檔
         saveData.cash += gameState.bonusEarned;
-        if(gameState.timer >= 60) {
-            saveData.phy += 5;
-            saveData.eq += 5;
-        } else {
-            saveData.phy += 2;
-        }
-
         modal.classList.add('active');
     }
 
-    // 關閉彈窗，帶返落日常系統
+    // 舉辦生日晉級大賽
+    function triggerNextStage() {
+        const modal = document.getElementById('result-modal');
+        const desc = document.getElementById('modal-desc');
+        document.getElementById('modal-title').innerText = `🎂 ${saveData.name} 的 1 歲大賽放榜`;
+        
+        let totalStats = saveData.iq + saveData.eq + saveData.phy + saveData.cre + saveData.fin + saveData.app;
+        
+        if (totalStats >= 165) {
+            desc.innerHTML = `🌟 <b>全網賀電！完美晉級！</b><br>經過三次大風大浪（日常與抽卡）嘅洗禮，${saveData.name} 六邊形總能力值達到 <b>${totalStats}</b>（目標 165）！順利通過名校幼稚園面試！<br><br>
+            🚀 <b>下一大階段已解鎖</b>：【1-3歲 幼兒探險期】！遊戲重置並全面升級全新難度！`;
+            // 重置次數，準備第二年
+            saveData.playCount = 0;
+        } else {
+            desc.innerHTML = `⚠️ <b>面試落榜：六邊形底子太薄</b><br>當前總能力值為 ${totalStats}（目標 165）。因為今年有幾次關卡表現不佳，${saveData.name} 未能成功晉級。<br><br>
+            💡 <b>作弊特權</b>：後台自動幫你特訓，重置你的年度次數！你可以【再玩 3 次】繼續累積財富同能力，直到達標為止！`;
+            saveData.playCount = 0;
+        }
+        modal.classList.add('active');
+    }
+
     function closeModal() {
         document.getElementById('result-modal').classList.remove('active');
         document.getElementById('battle-screen').classList.remove('active');
@@ -476,13 +459,14 @@
         updateMainDashboard();
     }
 
-    // CSS @keyframes 補充 (用於計時條縮短)
     const style = document.createElement('style');
     style.innerHTML = `@keyframes shrink { 0% { width: 100%; } 100% { width: 0%; } }`;
     document.head.appendChild(style);
 
-    // 初始化首次主畫面
-    updateMainDashboard();
+    window.onload = function() {
+        initChart();
+        updateMainDashboard();
+    };
 </script>
 
 </body>
