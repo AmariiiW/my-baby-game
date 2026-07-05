@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>手忙腳亂育兒大作戰 V3 - 終極修復版</title>
+    <title>手忙腳亂育兒大作戰 V3 - 終極啟動版</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
@@ -19,7 +19,8 @@
             position: relative; overflow: hidden; display: flex; flex-direction: column;
         }
 
-        .screen { display: none; width: 100%; height: 100%; flex-direction: column; box-sizing: border-box; padding: 20px; }
+        /* 調整畫面結構，預設顯示，用 active 控制切換 */
+        .screen { display: none; width: 100%; height: 100%; flex-direction: column; box-sizing: border-box; padding: 20px; position: absolute; top:0; left:0; background:#fff; }
         .screen.active { display: flex; }
         h2 { text-align: center; color: #333; margin-top: 5px; margin-bottom: 5px; }
 
@@ -31,40 +32,40 @@
         .wallet { font-size: 20px; font-weight: bold; color: #2ecc71; text-align: center; margin-bottom: 5px; }
         .pacing-info { text-align: center; font-size: 14px; font-weight: bold; color: #e67e22; margin-bottom: 8px; background: #fff3e0; padding: 5px; border-radius: 6px; }
 
-        .chart-container { width: 100%; max-width: 250px; margin: 0 auto 10px auto; position: relative; }
+        .chart-container { width: 100%; max-width: 230px; margin: 0 auto 10px auto; position: relative; height: 230px; }
 
         .btn-group { display: flex; flex-direction: column; gap: 8px; }
-        .btn { background-color: #ff7675; color: white; border: none; padding: 12px; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.1s; }
+        .btn { background-color: #ff7675; color: white; border: none; padding: 12px; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.1s; z-index: 10; }
         .btn-next { background-color: #9b59b6; }
         .btn-next:disabled { background-color: #bdc3c7; cursor: not-allowed; box-shadow: none; }
         .btn:active:not(:disabled) { transform: scale(0.95); }
 
         /* 抽卡畫面 UI */
-        #card-screen { background-color: #ffeaa7; justify-content: center; align-items: center; text-align: center; }
-        .card-box { background: white; padding: 30px; border-radius: 20px; border: 4px dashed #e67e22; box-shadow: 0 10px 20px rgba(0,0,0,0.15); width: 80%; margin: 0 auto; }
-        .card-title { font-size: 24px; font-weight: bold; color: #e67e22; margin-bottom: 15px; }
-        .card-effect { font-size: 16px; color: #2c3e50; line-height: 1.6; margin-bottom: 25px; font-weight: bold; }
+        #card-screen { background-color: #ffeaa7; justify-content: center; align-items: center; text-align: center; z-index: 20; }
+        .card-box { background: white; padding: 25px; border-radius: 20px; border: 4px dashed #e67e22; box-shadow: 0 10px 20px rgba(0,0,0,0.15); width: 85%; box-sizing: border-box; }
+        .card-title { font-size: 22px; font-weight: bold; color: #e67e22; margin-bottom: 15px; }
+        .card-effect { font-size: 15px; color: #2c3e50; line-height: 1.6; margin-bottom: 25px; font-weight: bold; }
 
         /* 遊戲關卡畫面 */
-        #battle-screen { background-color: #fafafa; position: relative; padding: 10px; }
+        #battle-screen { background-color: #fafafa; position: relative; padding: 10px; z-index: 30; }
         .game-header { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: bold; background: rgba(255,255,255,0.9); padding: 8px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); z-index: 100; }
         #game-area { flex: 1; position: relative; margin-top: 10px; border: 2px dashed #ccc; border-radius: 12px; overflow: hidden; background: #fff; }
 
         /* 實體：玩家 (家長) */
         #player {
             position: absolute; width: 40px; height: 40px; background-color: #3498db; border-radius: 50%;
-            transition: left 0.15s linear, top 0.15s linear;
+            transition: left 0.12s linear, top 0.12s linear;
             display: flex; justify-content: center; align-items: center; font-size: 18px; color: white; border: 2px solid #2980b9; z-index: 50; pointer-events: none;
         }
 
         /* 工作台 */
-        .station { position: absolute; bottom: 10px; width: 70px; height: 50px; border-radius: 8px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 20px; font-weight: bold; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; }
+        .station { position: absolute; bottom: 10px; width: 70px; height: 50px; border-radius: 8px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 20px; font-weight: bold; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; z-index: 60; }
         #station-milk { left: 40px; background-color: #f1c40f; border: 2px solid #f39c12; }
         #station-diaper { right: 40px; background-color: #e67e22; border: 2px solid #d35400; }
         .station-label { font-size: 10px; margin-top: 2px; }
 
         /* BB需求 */
-        .bb-npc { position: absolute; width: 60px; height: 60px; border-radius: 50%; background: #ffeaa7; display: flex; justify-content: center; align-items: center; font-size: 28px; border: 3px solid #fdcb6e; box-shadow: 0 4px 8px rgba(0,0,0,0.1); cursor: pointer; }
+        .bb-npc { position: absolute; width: 60px; height: 60px; border-radius: 50%; background: #ffeaa7; display: flex; justify-content: center; align-items: center; font-size: 28px; border: 3px solid #fdcb6e; box-shadow: 0 4px 8px rgba(0,0,0,0.1); cursor: pointer; z-index: 55; }
         .demand-bubble { position: absolute; top: -45px; background: white; border: 2px solid #ff7675; border-radius: 50%; width: 45px; height: 45px; display: flex; justify-content: center; align-items: center; font-size: 22px; animation: popup 0.2s ease-out; box-shadow: 0 4px 6px rgba(0,0,0,0.1); pointer-events: none; }
 
         @keyframes popup { 0% { transform: scale(0); } 100% { transform: scale(1); } }
@@ -89,7 +90,7 @@
 
 <div id="game-container">
 
-    <div id="main-screen" class="screen active">
+    <div id="main-screen" class="screen active" style="display: flex;">
         <h2>👶 育兒大作戰 V3</h2>
         <div class="name-section">
             <input type="text" id="txt-bb-name" class="name-input" value="笨寶" onchange="saveName()">
@@ -157,7 +158,7 @@
     let saveData = {
         name: "笨寶",
         cash: 1000,
-        iq: 15, eq: 15, phy: 15, cre: 15, fin: 15, app: 15,
+        iq: 20, eq: 20, phy: 20, cre: 20, fin: 20, app: 20,
         playCount: 0 
     };
 
@@ -166,37 +167,44 @@
         { id: 'elders', emoji: '👴👵', title: '長輩：四大長輩駕到', effect: '長輩們爭住塞利是！超時生存模式下，每次完美照顧獎金變為【$150】！', desc: '長輩加成' },
         { id: 'flu', emoji: '🤒', title: '危機：BB不適感冒', effect: 'BB身體唔舒服耐性極低！所有需求氣泡嘅爆炸倒數時間【縮短 40%】！', desc: '感冒降耐性' }
     ];
-    let activeCard = null; 
+    let activeCard = cardDeck[0]; 
 
     let gameState = {
         timer: 0, lives: 3, bonusEarned: 0,
         playerX: 180, playerY: 200, playerHolding: '空手',
         spawnInterval: null, clockInterval: null,
-        currentSpawnRate: 2500, isGameOver: false
+        currentSpawnRate: 2000, isGameOver: false
     };
 
     let radarChart = null;
 
+    // 建立安全圖表初始化，防止隱藏圖表卡死引擎
     function initChart() {
-        const ctx = document.getElementById('hexagonChart').getContext('2d');
-        radarChart = new Chart(ctx, {
-            type: 'radar',
-            data: {
-                labels: ['🧠 智商', '❤️ 情商', '💪 體魄', '🎨 創意', '📈 財商', '✨ 外在'],
-                datasets: [{
-                    label: 'BB 當前能力值',
-                    data: [saveData.iq, saveData.eq, saveData.phy, saveData.cre, saveData.fin, saveData.app],
-                    backgroundColor: 'rgba(255, 118, 117, 0.2)',
-                    borderColor: 'rgba(255, 118, 117, 1)',
-                    borderWidth: 2,
-                    pointBackgroundColor: 'rgba(214, 48, 49, 1)'
-                }]
-            },
-            options: {
-                scales: { r: { min: 0, max: 100, ticks: { display: false } } },
-                plugins: { legend: { display: false } }
-            }
-        });
+        try {
+            const ctx = document.getElementById('hexagonChart').getContext('2d');
+            radarChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['🧠 智商', '❤️ 情商', '💪 體魄', '🎨 創意', '📈 財商', '✨ 外在'],
+                    datasets: [{
+                        label: '能力值',
+                        data: [saveData.iq, saveData.eq, saveData.phy, saveData.cre, saveData.fin, saveData.app],
+                        backgroundColor: 'rgba(255, 118, 117, 0.2)',
+                        borderColor: 'rgba(255, 118, 117, 1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(214, 48, 49, 1)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { r: { min: 0, max: 100, ticks: { display: false } } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        } catch(e) {
+            console.log("Chart Error Bypass", e);
+        }
     }
 
     function saveName() { saveData.name = document.getElementById('txt-bb-name').value; }
@@ -229,20 +237,26 @@
         document.getElementById('card-title').innerText = activeCard.title;
         document.getElementById('card-effect').innerText = activeCard.effect;
 
+        // 全網頁切換顯示控制
         document.getElementById('main-screen').classList.remove('active');
+        document.getElementById('main-screen').style.display = 'none';
+        
         document.getElementById('card-screen').classList.add('active');
+        document.getElementById('card-screen').style.display = 'flex';
     }
 
-    // --- 【徹底修復位】優化開局邏輯，確保計時器 100% 啟動 ---
     function startLevelFromCard() {
-        // 先清理可能殘留的計時器，防重疊 Bug
+        // 先強制關閉、重置計時器，杜絕背景錯誤
         clearInterval(gameState.clockInterval);
         clearInterval(gameState.spawnInterval);
 
         document.getElementById('card-screen').classList.remove('active');
+        document.getElementById('card-screen').style.display = 'none';
+        
         document.getElementById('battle-screen').classList.add('active');
+        document.getElementById('battle-screen').style.display = 'flex';
 
-        // 重置狀態數據
+        // 初始化
         gameState.timer = 0; 
         gameState.lives = 3; 
         gameState.bonusEarned = 0;
@@ -256,22 +270,20 @@
         updateBattleUI();
         
         let speedMultiplier = activeCard.id === 'typhoon' ? 2 : 1;
-        gameState.currentSpawnRate = 2400 / speedMultiplier;
+        gameState.currentSpawnRate = 2200 / speedMultiplier;
 
-        // 玩家定位
+        // 玩家歸位
         gameState.playerX = 180; gameState.playerY = 200;
         document.getElementById('player').style.left = '180px';
         document.getElementById('player').style.top = '200px';
 
-        // 清場
         document.querySelectorAll('.bb-npc').forEach(el => el.remove());
-        document.getElementById('battle-screen').className = 'screen active';
 
-        // 【核心修正】明確開機
+        // 啟動最關鍵嘅核心引擎
         gameState.clockInterval = setInterval(gameClock, 1000);
         setupSpawning();
         
-        // 為了讓玩家一進場不覺得冷清，立即先生成第一隻 BB 需求
+        // 即時跳出一隻，確認完全啟動
         spawnBBNeed();
     }
 
@@ -308,7 +320,7 @@
 
         if (gameState.timer === 45) {
             document.getElementById('battle-screen').classList.add('fever-mode');
-            gameState.currentSpawnRate = 1200 / speedMultiplier;
+            gameState.currentSpawnRate = 1100 / speedMultiplier;
             setupSpawning();
         } else if (gameState.timer === 60) {
             document.getElementById('battle-screen').classList.remove('fever-mode');
@@ -421,15 +433,15 @@
         if (gameState.timer >= 60) {
             desc.innerHTML = `🎉 <b>成功在環境【${activeCard.title}】下活了下來！</b><br>
             你帶著 <b>${saveData.name}</b> 成功捱過常規 60 秒，並喺超時生存中撐到 <b>${gameState.timer}秒</b>！<br><br>
-            📈 隨機能力大幅提升：體魄 +10, 情商 +10, 智商 +5<br>
+            📈 能力提升：體魄 +10, 情商 +10, 智商 +5<br>
             💰 賺得教育基金：<b>+$${gameState.bonusEarned}</b>`;
             saveData.phy += 10; saveData.eq += 10; saveData.iq += 5;
         } else {
             desc.innerHTML = `🍼 <b>喺環境【${activeCard.title}】下徹底崩潰...</b><br>
             你在第 <b>${gameState.timer}秒</b> 時支撐不住。看來突發事件威力太強了！<br><br>
-            📈 成長安慰獎：體魄 +3, 創意 +2<br>
+            📈 成長安慰獎：體魄 +5, 創意 +5<br>
             💰 賺得教育基金：<b>+$0</b>`;
-            saveData.phy += 3; saveData.cre += 2;
+            saveData.phy += 5; saveData.cre += 5;
         }
 
         saveData.cash += gameState.bonusEarned;
@@ -443,7 +455,7 @@
         
         let totalStats = saveData.iq + saveData.eq + saveData.phy + saveData.cre + saveData.fin + saveData.app;
         
-        if (totalStats >= 60) { 
+        if (totalStats >= 130) { 
             desc.innerHTML = `🌟 <b>全網賀電！完美晉級！</b><br>經過三次大風大浪（日常與抽卡）嘅洗禮，${saveData.name} 六邊形總能力值達到 <b>${totalStats}</b>！順利通過名校幼稚園面試！<br><br>
             🚀 <b>下一大階段已解鎖</b>：【1-3歲 幼兒探險期】！感謝你的遊玩！`;
             saveData.playCount = 0;
@@ -457,8 +469,12 @@
 
     function closeModal() {
         document.getElementById('result-modal').classList.remove('active');
+        
         document.getElementById('battle-screen').classList.remove('active');
+        document.getElementById('battle-screen').style.display = 'none';
+        
         document.getElementById('main-screen').classList.add('active');
+        document.getElementById('main-screen').style.display = 'flex';
         updateMainDashboard();
     }
 
@@ -466,6 +482,7 @@
     style.innerHTML = `@keyframes shrink { 0% { width: 100%; } 100% { width: 0%; } }`;
     document.head.appendChild(style);
 
+    // 預設加載
     window.onload = function() {
         initChart();
         updateMainDashboard();
