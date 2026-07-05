@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>手忙腳亂育兒大作戰 V3 - Roguelike抽卡+學期制</title>
+    <title>手忙腳亂育兒大作戰 V3 - 穩定修復版</title>
+    <!-- 引入 Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
@@ -31,7 +32,7 @@
         .wallet { font-size: 20px; font-weight: bold; color: #2ecc71; text-align: center; margin-bottom: 5px; }
         .pacing-info { text-align: center; font-size: 14px; font-weight: bold; color: #e67e22; margin-bottom: 8px; background: #fff3e0; padding: 5px; border-radius: 6px; }
 
-        .chart-container { width: 100%; max-width: 260px; margin: 0 auto 10px auto; position: relative; }
+        .chart-container { width: 100%; max-width: 250px; margin: 0 auto 10px auto; position: relative; }
 
         .btn-group { display: flex; flex-direction: column; gap: 8px; }
         .btn { background-color: #ff7675; color: white; border: none; padding: 12px; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.1s; }
@@ -41,7 +42,7 @@
 
         /* 抽卡畫面 UI */
         #card-screen { background-color: #ffeaa7; justify-content: center; align-items: center; text-align: center; }
-        .card-box { background: white; padding: 30px; border-radius: 20px; border: 4px dashed #e67e22; box-shadow: 0 10px 20px rgba(0,0,0,0.15); width: 80%; }
+        .card-box { background: white; padding: 30px; border-radius: 20px; border: 4px dashed #e67e22; box-shadow: 0 10px 20px rgba(0,0,0,0.15); width: 80%; margin: 0 auto; }
         .card-title { font-size: 24px; font-weight: bold; color: #e67e22; margin-bottom: 15px; }
         .card-effect { font-size: 16px; color: #2c3e50; line-height: 1.6; margin-bottom: 25px; font-weight: bold; }
 
@@ -53,7 +54,7 @@
         /* 實體：玩家 (家長) */
         #player {
             position: absolute; width: 40px; height: 40px; background-color: #3498db; border-radius: 50%;
-            transition: left 0.18s linear, top 0.18s linear;
+            transition: left 0.15s linear, top 0.15s linear;
             display: flex; justify-content: center; align-items: center; font-size: 18px; color: white; border: 2px solid #2980b9; z-index: 50; pointer-events: none;
         }
 
@@ -64,8 +65,8 @@
         .station-label { font-size: 10px; margin-top: 2px; }
 
         /* BB需求 */
-        .bb-npc { position: absolute; width: 60px; height: 60px; border-radius: 50%; background: #ffeaa7; display: flex; justify-content: center; align-items: center; font-size: 28px; border: 3px solid #fdcb6e; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        .demand-bubble { position: absolute; top: -45px; background: white; border: 2px solid #ff7675; border-radius: 50%; width: 45px; height: 45px; display: flex; justify-content: center; align-items: center; font-size: 22px; animation: popup 0.2s ease-out; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .bb-npc { position: absolute; width: 60px; height: 60px; border-radius: 50%; background: #ffeaa7; display: flex; justify-content: center; align-items: center; font-size: 28px; border: 3px solid #fdcb6e; box-shadow: 0 4px 8px rgba(0,0,0,0.1); cursor: pointer; }
+        .demand-bubble { position: absolute; top: -45px; background: white; border: 2px solid #ff7675; border-radius: 50%; width: 45px; height: 45px; display: flex; justify-content: center; align-items: center; font-size: 22px; animation: popup 0.2s ease-out; box-shadow: 0 4px 6px rgba(0,0,0,0.1); pointer-events: none; }
 
         @keyframes popup { 0% { transform: scale(0); } 100% { transform: scale(1); } }
         .timer-bar { position: absolute; bottom: -5px; left: 5%; height: 4px; background-color: #ff7675; width: 90%; }
@@ -89,6 +90,7 @@
 
 <div id="game-container">
 
+    <!-- SCREEN 1: 主畫面 (日常養成面板) -->
     <div id="main-screen" class="screen active">
         <h2>👶 育兒大作戰 V3</h2>
         <div class="name-section">
@@ -113,6 +115,7 @@
         </div>
     </div>
 
+    <!-- SCREEN 2: 隨機環境卡抽卡畫面 -->
     <div id="card-screen" class="screen">
         <h2>🃏 命運事件砸進生活！</h2>
         <div class="card-box">
@@ -123,6 +126,7 @@
         </div>
     </div>
 
+    <!-- SCREEN 3: 小遊戲關卡畫面 -->
     <div id="battle-screen" class="screen">
         <div class="game-header">
             <div>⏱️ 時間: <span id="game-time">0</span>s</div>
@@ -142,6 +146,7 @@
         </div>
     </div>
 
+    <!-- 結算彈窗 MODAL -->
     <div id="result-modal" class="modal">
         <div class="modal-content">
             <h3 id="modal-title" style="font-size: 22px; margin-bottom: 10px;">BB 生日快樂！</h3>
@@ -158,7 +163,7 @@
         name: "笨寶",
         cash: 1000,
         iq: 15, eq: 15, phy: 15, cre: 15, fin: 15, app: 15,
-        playCount: 0 // 今年玩日常關卡嘅次數 (上限 3)
+        playCount: 0 
     };
 
     // --- 隨機卡牌庫設定 ---
@@ -167,7 +172,7 @@
         { id: 'elders', emoji: '👴👵', title: '長輩：四大長輩駕到', effect: '長輩們爭住塞利是！超時生存模式下，每次完美照顧獎金變為【$150】！', desc: '長輩加成' },
         { id: 'flu', emoji: '🤒', title: '危機：BB不適感冒', effect: 'BB身體唔舒服耐性極低！所有需求氣泡嘅爆炸倒數時間【縮短 40%】！', desc: '感冒降耐性' }
     ];
-    let activeCard = null; // 當前觸發嘅卡牌
+    let activeCard = null; 
 
     // --- 小遊戲即時變數 ---
     let gameState = {
@@ -178,7 +183,6 @@
     };
 
     let radarChart = null;
-    const emojis = ['🍼', '💩'];
 
     function initChart() {
         const ctx = document.getElementById('hexagonChart').getContext('2d');
@@ -209,7 +213,6 @@
         document.getElementById('txt-bb-name').value = saveData.name;
         document.getElementById('lbl-play-count').innerText = saveData.playCount;
 
-        // Pacing 控制：只有玩滿 3 次，生日按鈕先解鎖，同時日常關卡按鈕鎖死
         if(saveData.playCount >= 3) {
             document.getElementById('btn-birthday').disabled = false;
             document.getElementById('btn-start-game').disabled = true;
@@ -221,6 +224,7 @@
         }
 
         if(radarChart) {
+            // 【修復位】正確更新 Chart.js 數據嘅格式
             radarChart.data.datasets[0].data = [saveData.iq, saveData.eq, saveData.phy, saveData.cre, saveData.fin, saveData.app];
             radarChart.update();
         }
@@ -228,15 +232,12 @@
 
     // --- STEP 1: 抽卡流程 ---
     function drawRandomCard() {
-        // 隨機抽一張環境卡
         activeCard = cardDeck[Math.floor(Math.random() * cardDeck.length)];
         
-        // 渲染抽卡畫面
         document.getElementById('card-emoji').innerText = activeCard.emoji;
         document.getElementById('card-title').innerText = activeCard.title;
         document.getElementById('card-effect').innerText = activeCard.effect;
 
-        // 切換到抽卡畫面
         document.getElementById('main-screen').classList.remove('active');
         document.getElementById('card-screen').classList.add('active');
     }
@@ -246,15 +247,15 @@
         document.getElementById('card-screen').classList.remove('active');
         document.getElementById('battle-screen').classList.add('active');
 
-        // 初始化
+        // 重置狀態
         gameState.timer = 0; gameState.lives = 3; gameState.bonusEarned = 0;
         gameState.isGameOver = false; gameState.playerHolding = '空手';
         document.getElementById('player-hand').innerText = '空手';
         document.getElementById('player').innerText = '🧑‍🍼';
         document.getElementById('lbl-active-card').innerText = `卡牌: ${activeCard.desc}`;
         
-        // 基礎生成速度受【打風放假卡】影響
-        gameState.currentSpawnRate = activeCard.id === 'typhoon' ? 1200 : 2400;
+        let speedMultiplier = activeCard.id === 'typhoon' ? 2 : 1;
+        gameState.currentSpawnRate = 2400 / speedMultiplier;
 
         gameState.playerX = 180; gameState.playerY = 200;
         document.getElementById('player').style.left = '180px';
@@ -265,11 +266,12 @@
         document.getElementById('game-time').innerText = "0";
         updateBattleUI();
 
+        // 啟動計時器同生成器
         gameState.clockInterval = setInterval(gameClock, 1000);
         setupSpawning();
     }
 
-    // 走位與工作台交互邏輯
+    // 玩家移動
     function movePlayer(event) {
         if(gameState.isGameOver) return;
         const gameArea = document.getElementById('game-area');
@@ -286,6 +288,7 @@
         document.getElementById('player').style.top = gameState.playerY + 'px';
     }
 
+    // 工作台交互
     function interactStation(item, event) {
         event.stopPropagation();
         if(gameState.isGameOver) return;
@@ -299,7 +302,6 @@
         gameState.timer++;
         document.getElementById('game-time').innerText = gameState.timer;
 
-        // Pacing 動態加速控制 (受打風放假影響會成倍數疊加)
         let speedMultiplier = activeCard.id === 'typhoon' ? 2 : 1;
 
         if (gameState.timer === 45) {
@@ -312,7 +314,7 @@
             gameState.currentSpawnRate = 600 / speedMultiplier;
             setupSpawning();
         } else if (gameState.timer > 60) {
-            gameState.currentSpawnRate = Math.max(200, gameState.currentSpawnRate * 0.9);
+            gameState.currentSpawnRate = Math.max(300, gameState.currentSpawnRate * 0.9);
             setupSpawning();
         }
     }
@@ -340,8 +342,7 @@
         bubble.className = 'demand-bubble';
         bubble.innerText = neededItem;
 
-        // 計算耐性倒數時間：受【感冒卡】影響縮短 40%
-        let baseLifetime = gameState.timer > 60 ? 1500 : (gameState.timer >= 45 ? 2500 : 4000);
+        let baseLifetime = gameState.timer > 60 ? 1800 : (gameState.timer >= 45 ? 2800 : 4000);
         let lifetime = activeCard.id === 'flu' ? baseLifetime * 0.6 : baseLifetime;
 
         const timerBar = document.createElement('div');
@@ -350,12 +351,12 @@
         bubble.appendChild(timerBar);
         bb.appendChild(bubble);
 
+        // 點擊 BB NPC 進行照顧
         bb.onclick = function(e) {
             e.stopPropagation();
             if(gameState.isGameOver) return;
 
             if (gameState.playerHolding === neededItem) {
-                // 超時模式賺錢：受【長輩卡】加成變成一個 $150！
                 let moneyPerClick = activeCard.id === 'elders' ? 150 : 50;
                 let textDisplay = '完美照顧!';
                 
@@ -372,16 +373,19 @@
                 bb.remove();
                 updateBattleUI();
             } else {
-                alert(`BB依家想要的是 ${neededItem}！拿錯道具了！`);
+                alert(`BB依家想要的是 ${neededItem}！你拿錯咗或空手！`);
             }
         };
 
+        // 倒數超時扣命
         setTimeout(() => {
             if (bb.parentNode) {
                 bb.remove();
-                gameState.lives--;
-                updateBattleUI();
-                if (gameState.lives <= 0) endGame();
+                if(!gameState.isGameOver) {
+                    gameState.lives--;
+                    updateBattleUI();
+                    if (gameState.lives <= 0) endGame();
+                }
             }
         }, lifetime);
 
@@ -401,16 +405,18 @@
         document.getElementById('game-bonus').innerText = gameState.bonusEarned;
     }
 
-    // 關卡結束結算
+    // 結束小遊戲
     function endGame() {
+        if(gameState.isGameOver) return;
         gameState.isGameOver = true;
+        
         clearInterval(gameState.spawnInterval);
         clearInterval(gameState.clockInterval);
 
         const modal = document.getElementById('result-modal');
         const desc = document.getElementById('modal-desc');
+        document.getElementById('modal-title').innerText = "關卡結算";
         
-        // 次數累加
         saveData.playCount++;
 
         if (gameState.timer >= 60) {
@@ -431,7 +437,7 @@
         modal.classList.add('active');
     }
 
-    // 舉辦生日晉級大賽
+    // 生日大賽晉級
     function triggerNextStage() {
         const modal = document.getElementById('result-modal');
         const desc = document.getElementById('modal-desc');
@@ -439,14 +445,13 @@
         
         let totalStats = saveData.iq + saveData.eq + saveData.phy + saveData.cre + saveData.fin + saveData.app;
         
-        if (totalStats >= 165) {
-            desc.innerHTML = `🌟 <b>全網賀電！完美晉級！</b><br>經過三次大風大浪（日常與抽卡）嘅洗禮，${saveData.name} 六邊形總能力值達到 <b>${totalStats}</b>（目標 165）！順利通過名校幼稚園面試！<br><br>
-            🚀 <b>下一大階段已解鎖</b>：【1-3歲 幼兒探險期】！遊戲重置並全面升級全新難度！`;
-            // 重置次數，準備第二年
+        if (totalStats >= 60) { // 下調了晉級門檻至 60 點，確保更易通關
+            desc.innerHTML = `🌟 <b>全網賀電！完美晉級！</b><br>經過三次大風大浪嘅洗禮，${saveData.name} 六邊形總能力值達到 <b>${totalStats}</b>！順利通過名校幼稚園面試！<br><br>
+            🚀 <b>下一大階段已解鎖</b>：【1-3歲 幼兒探險期】！感謝你的遊玩！`;
             saveData.playCount = 0;
         } else {
-            desc.innerHTML = `⚠️ <b>面試落榜：六邊形底子太薄</b><br>當前總能力值為 ${totalStats}（目標 165）。因為今年有幾次關卡表現不佳，${saveData.name} 未能成功晉級。<br><br>
-            💡 <b>作弊特權</b>：後台自動幫你特訓，重置你的年度次數！你可以【再玩 3 次】繼續累積財富同能力，直到達標為止！`;
+            desc.innerHTML = `⚠️ <b>面試落榜：六邊形底子太薄</b><br>當前總能力值為 ${totalStats}。${saveData.name} 未能成功晉級。<br><br>
+            💡 <b>別擔心</b>：後台自動幫你特訓，重置你的年度次數！你可以【再玩 3 次】繼續累積財富同能力！`;
             saveData.playCount = 0;
         }
         modal.classList.add('active');
@@ -459,6 +464,7 @@
         updateMainDashboard();
     }
 
+    // 注入計時條縮短動畫
     const style = document.createElement('style');
     style.innerHTML = `@keyframes shrink { 0% { width: 100%; } 100% { width: 0%; } }`;
     document.head.appendChild(style);
