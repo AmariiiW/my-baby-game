@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>手忙腳亂育兒大作戰 - Prototype</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            user-select: none;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 414px; /* 模擬手機 iPhone 尺寸 */
+            height: 100vh;
+            max-height: 896px;
+            background-color: #ffffff;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 主畫面 UI */
+        .screen {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            box-sizing: border-box;
+            padding: 20px;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-top: 10px;
+        }
+
+        /* 儀表板：屬性與金錢 */
+        .dashboard {
+            background: #f7f9fa;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid #e1e4e6;
+        }
+
+        .wallet {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2ecc71;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .stat-box {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #edf0f2;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .stat-val {
+            font-weight: bold;
+            color: #3498db;
+        }
+
+        .btn {
+            background-color: #ff7675;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.1s;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        /* 遊戲關卡畫面 */
+        #battle-screen {
+            background-color: #fafafa;
+            position: relative;
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 16px;
+            font-weight: bold;
+            z-index: 10;
+            background: rgba(255,255,255,0.9);
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        #game-area {
+            flex: 1;
+            position: relative;
+            margin-top: 10px;
+            border: 2px dashed #ccc;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        /* 需求泡泡 */
+        .bubble {
+            position: absolute;
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            background: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 30px;
+            cursor: pointer;
+            animation: popup 0.2s ease-out;
+            border: 3px solid #ff7675;
+        }
+
+        @keyframes popup {
+            0% { transform: scale(0); }
+            100% { transform: scale(1); }
+        }
+
+        /* 倒數計時條 */
+        .timer-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            background-color: #ff7675;
+            width: 100%;
+        }
+
+        /* 瘋狂期紅光閃爍 */
+        .fever-mode {
+            animation: flash 0.5s infinite alternate;
+        }
+
+        @keyframes flash {
+            0% { background-color: #fafafa; }
+            100% { background-color: #ffeaa7; }
+        }
+
+        .survival-mode {
+            animation: survival-flash 0.4s infinite alternate;
+        }
+
+        @keyframes survival-flash {
+            0% { background-color: #ffdbdb; }
+            100% { background-color: #ffb3b3; }
+        }
+
+        /* 漂浮 Perfect 文字 */
+        .perfect-text {
+            position: absolute;
+            color: #2ecc71;
+            font-weight: bold;
+            font-size: 20px;
+            animation: floatUp 0.5s ease-out forwards;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-30px); }
+        }
+
+        /* 結算彈窗 */
+        .modal {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .modal.active {
+            opacity: 1; pointer-events: auto;
+        }
+
+        .modal-content {
+            background: white;
+            width: 80%;
+            border-radius: 16px;
+            padding: 25px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+
+    <!-- SCREEN 1: 主畫面 (日常養成面板) -->
+    <div id="main-screen" class="screen active">
+        <h2>👶 我的 BB (0歲)</h2>
+        
+        <div class="dashboard">
+            <div class="wallet">教育基金: $<span id="lbl-cash">1000</span></div>
+            <div class="stats-grid">
+                <div class="stat-box">🧠 智商 (IQ) <span class="stat-val" id="lbl-iq">10</span></div>
+                <div class="stat-box">❤️ 情商 (EQ) <span class="stat-val" id="lbl-eq">10</span></div>
+                <div class="stat-box">💪 體魄 (PHY) <span class="stat-val" id="lbl-phy">10</span></div>
+                <div class="stat-box">🎨 創意 (CRE) <span class="stat-val" id="lbl-cre">10</span></div>
+                <div class="stat-box">📈 財商 (FIN) <span class="stat-val" id="lbl-fin">10</span></div>
+                <div class="stat-box">✨ 外在 (APP) <span class="stat-val" id="lbl-app">10</span></div>
+            </div>
+        </div>
+
+        <p style="text-align: center; color: #666; font-size: 14px; margin-bottom: 30px;">
+            提示：1分鐘日常關卡。45秒後進入瘋狂期！60秒後若未死，進入【貪吃蛇超時模式】瘋狂賺錢！
+        </p>
+
+        <button class="btn" onclick="startLevel()">挑戰 0 歲日常地獄關卡 ➔</button>
+    </div>
+
+    <!-- SCREEN 2: 小遊戲關卡畫面 -->
+    <div id="battle-screen" class="screen">
+        <div class="game-header">
+            <div>⏱️ 時間: <span id="game-time">0</span>s</div>
+            <div style="color: #d63031;">❤️ 生命: <span id="game-lives">3</span></div>
+            <div style="color: #2ecc71;">💰 賺到: $<span id="game-bonus">0</span></div>
+        </div>
+        
+        <div id="game-area">
+            <!-- 泡泡會動態生成喺呢度 -->
+        </div>
+    </div>
+
+    <!-- 結算彈窗 MODAL -->
+    <div id="result-modal" class="modal">
+        <div class="modal-content">
+            <h3 id="modal-title" style="font-size: 24px; margin-bottom: 10px;">BB 一歲生快！</h3>
+            <p id="modal-desc" style="color: #555; line-height: 1.6; margin-bottom: 20px;"></p>
+            <button class="btn" style="width: 100%;" onclick="closeModal()">帶住獎金返回日常 ➔</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // --- 遊戲全局數據 (日常系統) ---
+    let saveData = {
+        cash: 1000,
+        iq: 10, eq: 10, phy: 10, cre: 10, fin: 10, app: 10
+    };
+
+    // --- 小遊戲即時變數 ---
+    let gameState = {
+        timer: 0,
+        lives: 3,
+        bonusEarned: 0,
+        spawnInterval: null,
+        clockInterval: null,
+        currentSpawnRate: 2000, // 初始 2 秒出一個
+        isGameOver: false
+    };
+
+    const emojis = ['🍼', '💩'];
+
+    // 更新主畫面顯示
+    function updateMainDashboard() {
+        document.getElementById('lbl-cash').innerText = saveData.cash;
+        document.getElementById('lbl-iq').innerText = saveData.iq;
+        document.getElementById('lbl-eq').innerText = saveData.eq;
+        document.getElementById('lbl-phy').innerText = saveData.phy;
+        document.getElementById('lbl-cre').innerText = saveData.cre;
+        document.getElementById('lbl-fin').innerText = saveData.fin;
+        document.getElementById('lbl-app').innerText = saveData.app;
+    }
+
+    // 開始小遊戲
+    function startLevel() {
+        // 切換畫面
+        document.getElementById('main-screen').classList.remove('active');
+        document.getElementById('battle-screen').classList.add('active');
+
+        // 初始化關卡數據
+        gameState.timer = 0;
+        gameState.lives = 3;
+        gameState.bonusEarned = 0;
+        gameState.currentSpawnRate = 2000;
+        gameState.isGameOver = false;
+        document.getElementById('game-area').innerHTML = '';
+        document.getElementById('battle-screen').className = 'screen active'; // 清除閃爍 class
+
+        updateBattleUI();
+
+        // 開啟計時器 (每秒執行一次)
+        gameState.clockInterval = setInterval(gameClock, 1000);
+        // 開啟泡泡生成器
+        setupSpawning();
+    }
+
+    // 關卡時間核心推進 (Pacing 控制邏輯)
+    function gameClock() {
+        if(gameState.isGameOver) return;
+
+        gameState.timer++;
+        document.getElementById('game-time').innerText = gameState.timer;
+
+        // Pacing 節奏階段判定
+        if (gameState.timer === 45) {
+            // 45秒：進入瘋狂期
+            document.getElementById('battle-screen').classList.add('fever-mode');
+            gameState.currentSpawnRate = 800; // 加快到 0.8 秒出一個
+            setupSpawning();
+        } else if (gameState.timer === 60) {
+            // 60秒：成功挺進【超時生存模式】！
+            document.getElementById('battle-screen').classList.remove('fever-mode');
+            document.getElementById('battle-screen').classList.add('survival-mode');
+            gameState.currentSpawnRate = 500; // 超時初始 0.5 秒一個
+            setupSpawning();
+        } else if (gameState.timer > 60) {
+            // 貪吃蛇式：超時後每秒速度再提升 8%
+            gameState.currentSpawnRate = Math.max(150, gameState.currentSpawnRate * 0.92);
+            setupSpawning();
+        }
+    }
+
+    // 重新設定動態生成速度
+    function setupSpawning() {
+        clearInterval(gameState.spawnInterval);
+        gameState.spawnInterval = setInterval(spawnBubble, gameState.currentSpawnRate);
+    }
+
+    // 生成需求泡泡
+    function spawnBubble() {
+        if(gameState.isGameOver) return;
+
+        const gameArea = document.getElementById('game-area');
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        bubble.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+
+        // 隨機左邊距與上邊距 (扣除泡泡自身大小避免出界)
+        const maxX = gameArea.clientWidth - 70;
+        const maxY = gameArea.clientHeight - 70;
+        bubble.style.left = Math.random() * maxX + 'px';
+        bubble.style.top = Math.random() * maxY + 'px';
+
+        // 加上泡泡內部的生命條 (耐性倒數)
+        const timerBar = document.createElement('div');
+        timerBar.className = 'timer-bar';
+        // 隨年齡/時間決定泡泡消失時間 (超時模式下泡泡極速爆炸)
+        let lifetime = gameState.timer > 60 ? 1200 : (gameState.timer >= 45 ? 1800 : 3000); 
+        timerBar.style.animation = `shrink ${lifetime}ms linear forwards`;
+        bubble.appendChild(timerBar);
+
+        // 點擊事件
+        bubble.onclick = function(e) {
+            e.stopPropagation();
+            // 彈出 Perfect 特效
+            createPerfectText(bubble.style.left, bubble.style.top);
+            
+            // 如果在超時生存模式，每點一個賺 $50
+            if (gameState.timer > 60) {
+                gameState.bonusEarned += 50;
+            }
+            
+            bubble.remove();
+            updateBattleUI();
+        };
+
+        // 超時未點擊爆炸
+        setTimeout(() => {
+            if (bubble.parentNode) {
+                bubble.remove();
+                gameState.lives--;
+                updateBattleUI();
+                if (gameState.lives <= 0) {
+                    endGame();
+                }
+            }
+        }, lifetime);
+
+        gameArea.appendChild(bubble);
+    }
+
+    // 畫面震動/Perfect 特效
+    function createPerfectText(x, y) {
+        const p = document.createElement('div');
+        p.className = 'perfect-text';
+        p.innerText = gameState.timer > 60 ? 'Perfect! +$50' : 'Perfect!';
+        p.style.left = x;
+        p.style.top = y;
+        document.getElementById('game-area').appendChild(p);
+        setTimeout(() => p.remove(), 500);
+    }
+
+    // 更新戰鬥動態 UI
+    function updateBattleUI() {
+        document.getElementById('game-lives').innerText = gameState.lives;
+        document.getElementById('game-bonus').innerText = gameState.bonusEarned;
+    }
+
+    // 遊戲結束 (命扣完)
+    function endGame() {
+        gameState.isGameOver = true;
+        clearInterval(gameState.spawnInterval);
+        clearInterval(gameState.clockInterval);
+
+        const modal = document.getElementById('result-modal');
+        const desc = document.getElementById('modal-desc');
+        
+        // 判定玩家撐得好唔好
+        if (gameState.timer >= 60) {
+            document.getElementById('modal-title').innerText = "🎉 戰神級家長！";
+            desc.innerHTML = `你成功捱過 60 秒常規地獄，並喺【超時生存模式】中撐到 <b>${gameState.timer}秒</b>！<br><br>
+            👶 成長獎勵：體魄 +5, 情商 +5<br>
+            💰 帶走額外教育基金：<b>$${gameState.bonusEarned}</b>`;
+        } else {
+            document.getElementById('modal-title').innerText = "🍼 照顧不周！";
+            desc.innerHTML = `你在第 <b>${gameState.timer}秒</b> 時崩潰了，未能進入超時賺錢模式。<br><br>
+            👶 成長獎勵：體魄 +2 (吸取教訓)<br>
+            💰 帶走額外教育基金：<b>$0</b>`;
+        }
+
+        // 結算數值灌回存檔
+        saveData.cash += gameState.bonusEarned;
+        if(gameState.timer >= 60) {
+            saveData.phy += 5;
+            saveData.eq += 5;
+        } else {
+            saveData.phy += 2;
+        }
+
+        modal.classList.add('active');
+    }
+
+    // 關閉彈窗，帶返落日常系統
+    function closeModal() {
+        document.getElementById('result-modal').classList.remove('active');
+        document.getElementById('battle-screen').classList.remove('active');
+        document.getElementById('main-screen').classList.add('active');
+        updateMainDashboard();
+    }
+
+    // CSS @keyframes 補充 (用於計時條縮短)
+    const style = document.createElement('style');
+    style.innerHTML = `@keyframes shrink { 0% { width: 100%; } 100% { width: 0%; } }`;
+    document.head.appendChild(style);
+
+    // 初始化首次主畫面
+    updateMainDashboard();
+</script>
+
+</body>
+</html>
