@@ -3,25 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>手忙腳亂育兒大作戰 V5.2 - 終極修復版</title>
+    <title>手忙腳亂育兒大作戰 V5.3 - 桌面電腦完美適配版</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #f0f2f5; margin: 0; padding: 0;
+            background-color: #2c3e50; margin: 0; padding: 0;
             display: flex; justify-content: center; align-items: center;
             min-height: 100vh; user-select: none;
         }
 
+        /* 【核心修正】強制鎖定手機比例容器，喺 Desktop 會完美置中，唔會再拉散 UI */
         #game-container {
-            width: 100%; max-width: 414px; height: 100vh; max-height: 896px;
-            background-color: #ffffff; box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            width: 414px; height: 736px;
+            background-color: #ffffff; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             position: relative; overflow: hidden; display: flex; flex-direction: column;
+            border-radius: 16px; border: 4px solid #34495e;
         }
 
         .screen { display: none; width: 100%; height: 100%; flex-direction: column; box-sizing: border-box; padding: 15px; position: absolute; top:0; left:0; background:#fff; }
         .screen.active { display: flex; }
-        h2 { text-align: center; color: #2c3e50; margin: 5px 0; font-size: 24px; }
+        h2 { text-align: center; color: #2c3e50; margin: 5px 0; font-size: 22px; }
 
         /* 主畫面 UI */
         .name-section { display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 5px; }
@@ -29,21 +31,21 @@
         .age-badge { background: #3498db; color: white; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 14px; }
         
         .pacing-info { text-align: center; font-size: 13px; font-weight: bold; color: #e67e22; margin-bottom: 8px; background: #fff3e0; padding: 6px; border-radius: 8px; border: 1px dashed #e67e22; }
-        .dashboard { background: #f8f9fa; border-radius: 12px; padding: 10px; margin-bottom: 10px; border: 1px solid #e1e4e6; }
-        .wallet { font-size: 20px; font-weight: bold; color: #2ecc71; text-align: center; margin-bottom: 5px; background: #e8f8f0; padding: 5px; border-radius: 8px; }
-        .chart-container { width: 100%; max-width: 210px; margin: 0 auto; position: relative; height: 210px; }
+        .dashboard { background: #f8f9fa; border-radius: 12px; padding: 8px; margin-bottom: 10px; border: 1px solid #e1e4e6; }
+        .wallet { font-size: 18px; font-weight: bold; color: #2ecc71; text-align: center; margin-bottom: 5px; background: #e8f8f0; padding: 5px; border-radius: 8px; }
+        .chart-container { width: 100%; max-width: 190px; margin: 0 auto; position: relative; height: 190px; }
 
         .btn-group { display: flex; flex-direction: column; gap: 8px; }
-        .btn { background-color: #ff7675; color: white; border: none; padding: 12px; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.1s; }
+        .btn { background-color: #ff7675; color: white; border: none; padding: 12px; border-radius: 12px; font-size: 15px; font-weight: bold; cursor: pointer; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.1s; }
         .btn-next { background-color: #9b59b6; }
         .btn-next:disabled { background-color: #bdc3c7; cursor: not-allowed; box-shadow: none; }
         .btn:active:not(:disabled) { transform: scale(0.95); }
 
         /* 遊戲共同關卡畫面 */
-        .game-header { display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: bold; background: #2c3e50; color: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 100; position: relative; }
+        .game-header { display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: bold; background: #2c3e50; color: white; padding: 10px; border-radius: 8px; z-index: 100; }
         
-        /* 【關鍵修正】日常遊戲區加上 margin-top 並且往下壓，確保絕對碰不到狀態欄 */
-        .game-area { flex: 1; position: relative; margin-top: 60px; border: 3px dashed #bdc3c7; border-radius: 12px; overflow: hidden; background: #fafafa; }
+        /* 日常遊戲區固定高度與邊距 */
+        .game-area { width: 100%; height: 580px; position: relative; margin-top: 10px; border: 3px dashed #bdc3c7; border-radius: 12px; overflow: hidden; background: #fafafa; }
 
         /* 日常關卡專屬 */
         #player {
@@ -54,23 +56,23 @@
         .holding-tag { font-size: 9px; background: rgba(0,0,0,0.6); padding: 1px 3px; border-radius: 4px; position: absolute; bottom: -12px; white-space: nowrap; }
 
         .station { position: absolute; bottom: 15px; width: 80px; height: 60px; border-radius: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 24px; color: white; box-shadow: 0 6px 10px rgba(0,0,0,0.15); cursor: pointer; border: 3px solid #fff; transition: transform 0.1s; z-index: 60; }
-        #station-milk { left: 30px; background: linear-gradient(135deg, #f1c40f, #f39c12); }
-        #station-diaper { right: 30px; background: linear-gradient(135deg, #e67e22, #d35400); }
+        #station-milk { left: 25px; background: linear-gradient(135deg, #f1c40f, #f39c12); }
+        #station-diaper { right: 25px; background: linear-gradient(135deg, #e67e22, #d35400); }
         .station-label { font-size: 11px; font-weight: bold; margin-top: 2px; background: rgba(0,0,0,0.2); width: 100%; text-align: center; border-radius: 0 0 7px 7px; }
         .station-loading { position: absolute; top: -10px; left: 0; width: 100%; height: 6px; background: #eee; border-radius: 3px; overflow: hidden; display: none; }
         .station-progress { height: 100%; width: 0%; background: #2ecc71; transition: width 0.6s linear; }
 
         /* BB NPC */
-        .bb-npc { position: absolute; width: 60px; height: 60px; border-radius: 50%; background: #ffeaa7; display: flex; justify-content: center; align-items: center; font-size: 28px; border: 3px solid #fdcb6e; box-shadow: 0 4px 8px rgba(0,0,0,0.1); cursor: pointer; z-index: 45; }
-        .demand-bubble { position: absolute; top: -55px; background: white; border: 3px solid #ff7675; border-radius: 50%; width: 48px; height: 48px; display: flex; justify-content: center; align-items: center; font-size: 24px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); pointer-events: none; z-index: 49; }
+        .bb-npc { position: absolute; width: 55px; height: 55px; border-radius: 50%; background: #ffeaa7; display: flex; justify-content: center; align-items: center; font-size: 26px; border: 3px solid #fdcb6e; box-shadow: 0 4px 8px rgba(0,0,0,0.1); cursor: pointer; z-index: 45; }
+        .demand-bubble { position: absolute; top: -52px; background: white; border: 3px solid #ff7675; border-radius: 50%; width: 44px; height: 44px; display: flex; justify-content: center; align-items: center; font-size: 22px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); pointer-events: none; z-index: 49; }
         .timer-bar-container { position: absolute; bottom: -6px; left: 5%; height: 6px; background: #dfe6e9; width: 90%; border-radius: 3px; overflow: hidden; }
         .timer-bar { height: 100%; background-color: #ff7675; width: 100%; }
 
         /* 突發事件 */
-        .mid-game-card { position: absolute; top: 25%; left: 8%; width: 84%; background: white; border: 4px dashed #e67e22; border-radius: 20px; padding: 20px; box-sizing: border-box; text-align: center; box-shadow: 0 15px 30px rgba(0,0,0,0.3); z-index: 200; display: none; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .mid-game-card { position: absolute; top: 20%; left: 8%; width: 84%; background: white; border: 4px dashed #e67e22; border-radius: 20px; padding: 20px; box-sizing: border-box; text-align: center; box-shadow: 0 15px 30px rgba(0,0,0,0.3); z-index: 200; display: none; }
 
-        /* 雙線大賽 UI */
-        .race-track-container { display: flex; width: 100%; flex: 1; margin-top: 10px; position: relative; border-radius: 12px; overflow: hidden; border: 3px solid #9b59b6; background: #f0f2f5; height: 480px; }
+        /* 雙線大賽 UI 固定高度 */
+        .race-track-container { display: flex; width: 100%; height: 480px; position: relative; border-radius: 12px; overflow: hidden; border: 3px solid #9b59b6; background: #f0f2f5; margin-top: 5px; }
         .race-lane-half { width: 50%; height: 100%; position: relative; overflow: hidden; box-sizing: border-box; }
         .race-lane-half:first-child { border-right: 4px dashed #9b59b6; background: #fffcf5; }
         .race-lane-half:last-child { background: #f5f7fa; }
@@ -78,7 +80,6 @@
         .lane-sub-line { position: absolute; top:0; bottom:0; border-left: 1px dotted #e1e4e6; pointer-events: none; }
         .track-title { position: absolute; top: 5px; width: 100%; text-align: center; font-size: 11px; font-weight: bold; background: rgba(255,255,255,0.8); padding: 2px 0; z-index: 10; color: #555; pointer-events: none; }
 
-        /* 大賽 BB 調整為用固定數值操控 bottom */
         .racer-token { position: absolute; bottom: 15px; width: 44px; height: 44px; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 24px; z-index: 60; box-shadow: 0 4px 8px rgba(0,0,0,0.2); font-weight: bold; pointer-events: none; }
         #player-racer { background: #ffeaa7; border: 3px solid #fdcb6e; }
         #ai-racer { background: #a29bfe; border: 3px solid #6c5ce7; }
@@ -93,7 +94,7 @@
         @keyframes flash-fever { 0% { background-color: #ffffff; } 100% { background-color: #fff9e6; } }
         .survival-mode { animation: flash-survival 0.4s infinite alternate; }
         @keyframes flash-survival { 0% { background-color: #ffffff; } 100% { background-color: #ffe6e6; } }
-        .perfect-text { position: absolute; color: #2ecc71; font-weight: bold; font-size: 15px; animation: floatUp 0.6s ease-out forwards; pointer-events: none; z-index: 100; text-shadow: 1px 1px 0 #fff; }
+        .perfect-text { position: absolute; color: #2ecc71; font-weight: bold; font-size: 14px; animation: floatUp 0.6s ease-out forwards; pointer-events: none; z-index: 100; text-shadow: 1px 1px 0 #fff; }
         @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-40px); } }
 
         .modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
@@ -106,7 +107,7 @@
 <div id="game-container">
 
     <div id="main-screen" class="screen active">
-        <h2>👶 育兒大作戰 V5.2</h2>
+        <h2>👶 育兒大作戰 V5.3</h2>
         <div class="name-section">
             <input type="text" id="txt-bb-name" class="name-input" value="笨寶" onchange="saveName()">
             <div class="age-badge"><span id="lbl-bb-age">0</span> 歲</div>
@@ -150,10 +151,10 @@
             </div>
 
             <div id="mid-card-popup" class="mid-game-card">
-                <div id="mid-emoji" style="font-size: 50px;">🌪️</div>
-                <h3 id="mid-title" style="margin: 8px 0; color:#e67e22;">突發事件！</h3>
-                <p id="mid-effect" style="font-size: 13px; color:#333; margin-bottom:15px; font-weight:bold;"></p>
-                <button class="btn" style="background:#e67e22; padding:8px 20px; font-size:14px;" onclick="resumeFromCard()">硬著頭皮頂硬上！</button>
+                <div id="mid-emoji" style="font-size: 40px;">🌪️</div>
+                <h3 id="mid-title" style="margin: 5px 0; color:#e67e22; font-size:18px;">突發事件！</h3>
+                <p id="mid-effect" style="font-size: 13px; color:#333; margin-bottom:12px; font-weight:bold;"></p>
+                <button class="btn" style="background:#e67e22; padding:6px 15px; font-size:13px;" onclick="resumeFromCard()">硬著頭皮頂硬上！</button>
             </div>
         </div>
     </div>
@@ -164,7 +165,7 @@
             <div style="color: #ffeaa7;">我方: <span id="race-score">0</span></div>
             <div style="color: #a29bfe;">對手: <span id="ai-score">0</span></div>
         </div>
-        <p style="font-size:11px; margin:4px 0; text-align:center; font-weight:bold; color:#7f8c8d;">點擊左側賽道控制我方BB！右側為 AI 自動爬行線。</p>
+        <p style="font-size:11px; margin:5px 0; text-align:center; font-weight:bold; color:#7f8c8d;">點擊左側賽道控制我方BB！右側為 AI 自動爬行線。</p>
         
         <div class="race-track-container">
             <div id="player-track" class="race-lane-half" onclick="movePlayerRacer(event)">
@@ -185,8 +186,8 @@
 
     <div id="result-modal" class="modal">
         <div class="modal-content">
-            <h3 id="modal-title" style="font-size: 22px; margin-bottom: 10px; color:#2c3e50;">關卡結算</h3>
-            <p id="modal-desc" style="color: #555; line-height: 1.6; margin-bottom: 20px; text-align: left; font-size:14px;"></p>
+            <h3 id="modal-title" style="font-size: 20px; margin-bottom: 10px; color:#2c3e50;">關卡結算</h3>
+            <p id="modal-desc" style="color: #555; line-height: 1.5; margin-bottom: 15px; text-align: left; font-size:13px;"></p>
             <button class="btn" style="width: 100%;" onclick="closeModal()">確認返回養成面板 ➔</button>
         </div>
     </div>
@@ -203,7 +204,7 @@
     const cardDeck = [
         { id: 'typhoon', emoji: '🌪️', title: '突發：打風放假', effect: 'BB全日喺屋企精力過剩！泡泡生成速度【加快雙倍】！', desc: '打風放假' },
         { id: 'elders', emoji: '👴👵', title: '長輩：四大長輩駕到', effect: '長輩們爭住塞利是！每次完美照顧獎金變為【$150】！', desc: '長輩加成' },
-        { id: 'flu', emoji: '🤒', title: '危機：BB不適感感冒', effect: 'BB身體唔舒服耐性極低！泡泡爆炸倒數【縮短 40%】！', desc: '感冒降耐性' }
+        { id: 'flu', emoji: '🤒', title: '危機：BB不適感冒', effect: 'BB身體唔舒服耐性極低！泡泡爆炸倒數【縮短 40%】！', desc: '感冒降耐性' }
     ];
     let activeCard = null;
     let cardTriggered = false;
@@ -215,18 +216,15 @@
         currentSpawnRate: 2200, isGameOver: false
     };
 
-    // 重新定義大賽數據結構，完全用數值作判定基準
     let raceState = {
         timer: 20, scoreP: 0, scoreAI: 0, 
-        laneP: 1, laneAI: 1, // 0=左, 1=中, 2=右
+        laneP: 1, laneAI: 1,
         isGameOver: false,
         loopInterval: null, clockInterval: null, aiBehaviorInterval: null
     };
 
-    const laneLeftPx = [15, 68, 120]; // 獨立賽道內左中右的 X 坐標
-    const racerWidth = 44;
-    const racerHeight = 44;
-    const racerBottomY = 465; // 物件向下掉落撞擊線 (480總高 - 15底邊)
+    const laneLeftPx = [15, 68, 120]; 
+    const racerBottomY = 420; // 配合 480px 固定高度的碰撞底線
 
     let radarChart = null;
 
@@ -296,9 +294,9 @@
         updateBattleUI();
         
         gameState.currentSpawnRate = 2200;
-        gameState.playerX = 180; gameState.playerY = 220;
+        gameState.playerX = 180; gameState.playerY = 250;
         document.getElementById('player').style.left = '180px';
-        document.getElementById('player').style.top = '220px';
+        document.getElementById('player').style.top = '250px';
 
         document.querySelectorAll('.bb-npc').forEach(el => el.remove());
 
@@ -311,13 +309,15 @@
         if(gameState.isGameOver || gameState.isPaused) return;
         const gameArea = document.getElementById('game-area');
         const rect = gameArea.getBoundingClientRect();
+        
+        // 電腦版核心修正：依據固定框的內坐標計算
         gameState.playerX = event.clientX - rect.left - 22;
         gameState.playerY = event.clientY - rect.top - 22;
 
-        if(gameState.playerY > rect.height - 110) gameState.playerY = rect.height - 110;
-        if(gameState.playerY < 15) gameState.playerY = 15; // 限制頂部不穿模
+        if(gameState.playerY > gameArea.clientHeight - 100) gameState.playerY = gameArea.clientHeight - 100;
+        if(gameState.playerY < 80) gameState.playerY = 80; 
         if(gameState.playerX < 10) gameState.playerX = 10;
-        if(gameState.playerX > rect.width - 55) gameState.playerX = rect.width - 55;
+        if(gameState.playerX > gameArea.clientWidth - 55) gameState.playerX = gameArea.clientWidth - 55;
 
         document.getElementById('player').style.left = gameState.playerX + 'px';
         document.getElementById('player').style.top = gameState.playerY + 'px';
@@ -341,7 +341,7 @@
             }
             loadEl.style.display = 'none';
             progEl.style.width = '0%';
-        }, 600);
+        }, 500);
     }
 
     function gameClock() {
@@ -406,11 +406,11 @@
         bb.className = 'bb-npc';
         bb.innerText = '👶';
 
-        const maxX = gameArea.clientWidth - 70;
+        const maxX = gameArea.clientWidth - 65;
         
-        // 【天花板大二度修復】minY 設成 70，加上外邊距，泡泡無論如何都不可能爬到頂部看不到的地方！
-        const minY = 70; 
-        const maxY = gameArea.clientHeight - 190;
+        // 【桌面端重力限制】天花板設在 85px，地板限在 240px，讓BB集中在畫面中段，絕對不會飛去頂部！
+        const minY = 85; 
+        const maxY = 240; 
         const left = Math.random() * maxX;
         const top = Math.random() * (maxY - minY) + minY;
         
@@ -507,7 +507,7 @@
         modal.classList.add('active');
     }
 
-    // --- 【重寫】雙線大賽判定機制邏輯 ---
+    // --- 雙線大賽邏輯 ---
     function startBirthdayRace() {
         document.getElementById('main-screen').classList.remove('active');
         document.getElementById('race-screen').classList.add('active');
@@ -525,23 +525,18 @@
         updateRacerRenderPosition(true);
         updateRacerRenderPosition(false);
 
-        // 倒計時
         raceState.clockInterval = setInterval(() => {
             raceState.timer--;
             document.getElementById('race-time').innerText = raceState.timer;
             if(raceState.timer <= 0) endRaceGame();
         }, 1000);
 
-        // 生成掉落物
         raceState.loopInterval = setInterval(() => {
             spawnTrackObjects(true);
             spawnTrackObjects(false);
-        }, 650);
+        }, 700);
 
-        // AI 換線大腦
         raceState.aiBehaviorInterval = setInterval(processAIIntelligence, 500);
-        
-        // 物理更新
         requestAnimationFrame(racePhysicsLoop);
     }
 
@@ -576,10 +571,10 @@
         let objLane = parseInt(closestObj.dataset.laneVal);
 
         if(closestObj.dataset.type === 'item') {
-            raceState.laneAI = objLane; // 是禮物就靠過去
+            raceState.laneAI = objLane; 
         } else {
             if(raceState.laneAI === objLane) {
-                raceState.laneAI = (objLane + 1) % 3; // 是障礙物就避開
+                raceState.laneAI = (objLane + 1) % 3; 
             }
         }
         updateRacerRenderPosition(false);
@@ -590,8 +585,9 @@
         const lane = isPlayer ? raceState.laneP : raceState.laneAI;
         const leftPositions = ['12%', '41%', '71%'];
         
-        let transSpeed = isPlayer ? Math.max(0.05, 0.25 - (saveData.phy * 0.002)) : 0.15;
-        racer.style.transition = `left ${transSpeed}s ease-out`;
+        // 【體魄屬性關聯】我方移動速度改由 saveData.phy 決定！日常關卡加越多體魄，移動延遲越低！
+        let transSpeed = isPlayer ? Math.max(0.04, 0.22 - (saveData.phy * 0.0025)) : 0.16;
+        racer.style.transition = `left ${transSpeed}s cubic-bezier(0.1, 0.8, 0.3, 1)`;
         racer.style.left = leftPositions[lane];
     }
 
@@ -599,7 +595,7 @@
         if(raceState.isGameOver) return;
         const parentTrack = document.getElementById(isPlayer ? 'player-track' : 'ai-track');
         const randLane = Math.floor(Math.random() * 3);
-        const isObs = Math.random() > 0.5;
+        const isObs = Math.random() > 0.55;
 
         const obj = document.createElement('div');
         obj.className = 'race-spawn-obj ' + (isObs ? 'obj-p-obs' : 'obj-p-item');
@@ -607,7 +603,6 @@
         obj.style.left = laneLeftPx[randLane] + 'px';
         obj.style.top = '-40px';
         
-        // 【神修正點】直接把當前跑道編號跟高度數值寫死喺 Dataset，不依賴瀏覽器硬件坐標
         obj.dataset.laneVal = randLane;
         obj.dataset.topVal = -40;
 
@@ -623,7 +618,6 @@
         parentTrack.appendChild(obj);
     }
 
-    // 【全新重寫】純數值空間交尾算法
     function racePhysicsLoop() {
         if(raceState.isGameOver) return;
         const tracks = ['player-track', 'ai-track'];
@@ -636,16 +630,15 @@
 
             objs.forEach(obj => {
                 let currentTop = parseFloat(obj.dataset.topVal);
-                currentTop += 5.0; // 穩定下落步長
+                
+                // 【核心修正】降低物件掉落速度（5.0 -> 3.8），俾 Desktop 玩家有足夠人類反應時間點擊！
+                currentTop += 3.8; 
                 obj.dataset.topVal = currentTop;
                 obj.style.top = currentTop + 'px';
 
                 let objLane = parseInt(obj.dataset.laneVal);
 
-                // 【核心碰撞檢測修復】
-                // 當物件的高度剛好掉落到 BB 所在的垂直高度區間 (racerBottomY 附近)
-                if (currentTop >= (racerBottomY - 25) && currentTop <= (racerBottomY + 25)) {
-                    // 只要當前物件跑道編號等於 BB 所在編號，即屬百分之百命中！
+                if (currentTop >= (racerBottomY - 20) && currentTop <= (racerBottomY + 20)) {
                     if (objLane === currentRacerLane) {
                         if(obj.dataset.type === 'item') {
                             if(isPlayer) {
@@ -668,8 +661,7 @@
                     }
                 }
 
-                // 超出邊界自動清除
-                if(currentTop > 490) obj.remove();
+                if(currentTop > 480) obj.remove();
             });
         });
 
@@ -700,18 +692,18 @@
             desc.innerHTML = `<b>抓周對戰賽果放榜：</b><br>
             🥇 <b>我方 (${saveData.name})：</b> ${raceState.scoreP} 分<br>
             🥈 <b>鄰居張太 BB：</b> ${raceState.scoreAI} 分<br><br>
-            🔥 <b>全場震驚！</b> 你的 BB 徹底擊敗了鄰居家的天才 BB！張太當場黑面走人！<br><br>
-            💰 <b>贏取對戰紅红包：</b> <b>+$${cashBonus}</b> 教育基金！<br>
-            📈 <b>六邊形能力大爆發：</b> 智商、財商、體魄集體大加 <b>+${statReward}</b> 點！<br><br>
-            🎉 成功取得名校幼稚園 **「正取生超前 Offer」**！BB 順利進入 1 歲探索期！`;
+            🔥 你的 BB 憑藉驚人的反應力，在限定窄框內成功擊敗了隔壁張太的天才 BB！<br><br>
+            💰 <b>贏取對戰紅包：</b> <b>+$${cashBonus}</b> 教育基金！<br>
+            📈 <b>能力大爆發：</b> 智商、財商、體魄大加 <b>+${statReward}</b> 點！<br><br>
+            🎉 成功取得名校幼稚園 **「正取生 Offer」**！BB 順利進入 1 歲探索期！`;
         } else {
             document.getElementById('modal-title').innerText = `😭 惜敗！鄰居 BB 險勝`;
             desc.innerHTML = `<b>抓周對戰賽果放榜：</b><br>
             🥇 <b>鄰居張太 BB：</b> ${raceState.scoreAI} 分<br>
             🥈 <b>我方 (${saveData.name})：</b> ${raceState.scoreP} 分<br><br>
-            ⚠️ <b>惜敗！</b> 隔壁張太嘅 BB 走位太靈活了。張太臨走前仲炫耀佢個 BB 報咗 5 個英文補習班！<br><br>
-            📈 <b>家長特訓安慰獎：</b> 全屬性依然獲得基礎成長 <b>+${statReward}</b> 點！<br><br>
-            💡 <b>別灰心：</b> 後台已自動解鎖下一輪年度特訓，多去日常關卡刷高 **「💪 體魄」**，下次大賽你的 BB 移動速度就會超越 AI！`;
+            ⚠️ <b>惜敗！</b> 張太個 BB 走位太鬼祟了。<br><br>
+            📈 <b>家長特訓安慰獎：</b> 屬性獲得基礎成長 <b>+${statReward}</b> 點！<br><br>
+            💡 <b>攻略提示：</b> 每季日常關卡結算會隨機獎勵 **「💪 體魄 (PHY)」**。只要體魄基數越高，大賽裡你點擊轉線嘅速度就會成正比暴增！等多刷幾次日常，下年一定能報仇！`;
         }
 
         modal.classList.add('active');
